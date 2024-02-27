@@ -1,0 +1,12 @@
+When checked, record analytics will cause the motors to output additional 
+information during runtime. This information will be outputted to an analytics
+ file with the date of the run.
+
+Analytics from multiple runs on the same day will be in the same file, but
+ will be clearly separated.
+    
+This can only be done when the motors are run continuously.
+        
+NOTE: Since this information is pulled during runtime, the motors will appear
+unresponsive, and can't be stopped (right now) while information is being 
+collected.

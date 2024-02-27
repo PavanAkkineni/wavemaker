@@ -1,0 +1,48 @@
+
+----- Run Fri Jun 17 13:10:09 2022-----
+
+At T = 0
+- Motor 27 -
+Desired position: 3500000
+Actual Position: 3500224
+Displacement: 224
+- Motor 28 -
+Desired position: 3500000
+Actual Position: 3499840
+Displacement: 160
+- Motor 29 -
+Desired position: 3500000
+Actual Position: 3500187
+Displacement: 187
+
+----- Run Fri Jun 17 13:13:33 2022-----
+
+At T = 0
+- Motor 27 -
+Desired position: 3500000
+Actual Position: 3500233
+Displacement: 233
+- Motor 28 -
+Desired position: 3500000
+Actual Position: 3500132
+Displacement: 132
+- Motor 29 -
+Desired position: 3499998
+Actual Position: 3500224
+Displacement: 226
+
+----- Run Fri Jun 17 13:34:33 2022-----
+
+At T = 0
+- Motor 27 -
+Desired position: 3500000
+Actual Position: 3500233
+Displacement: 233
+- Motor 28 -
+Desired position: 3500000
+Actual Position: 3500150
+Displacement: 150
+- Motor 29 -
+Desired position: 3500000
+Actual Position: 3500224
+Displacement: 224

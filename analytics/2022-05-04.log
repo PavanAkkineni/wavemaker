@@ -1,0 +1,382 @@
+
+----- Run Wed May  4 17:26:51 2022-----
+
+At T = 0
+- Motor 27 -
+Desired position: 3500000
+Actual Position: 3500269
+Displacement: 269
+- Motor 28 -
+Desired position: 3500000
+Actual Position: 3499867
+Displacement: 133
+- Motor 24 -
+Desired position: 3500000
+Actual Position: 3499776
+Displacement: 224
+- Motor 25 -
+Desired position: 3499994
+Actual Position: 3499840
+Displacement: 154
+- Motor 26 -
+Desired position: 3499998
+Actual Position: 3499785
+Displacement: 213
+- Motor 29 -
+Desired position: 3499974
+Actual Position: 3500215
+Displacement: 241
+- Motor 21 -
+Desired position: 3499861
+Actual Position: 3499830
+Displacement: 31
+- Motor 22 -
+Desired position: 3499856
+Actual Position: 3499738
+Displacement: 118
+- Motor 23 -
+Desired position: 3499800
+Actual Position: 3499994
+Displacement: 194
+
+At T = 0.5
+- Motor 27 -
+Desired position: 3023890
+Actual Position: 3030183
+Displacement: 6293
+- Motor 28 -
+Desired position: 3002986
+Actual Position: 3008329
+Displacement: 5343
+- Motor 24 -
+Desired position: 2977401
+Actual Position: 2984627
+Displacement: 7226
+- Motor 25 -
+Desired position: 2978003
+Actual Position: 2957893
+Displacement: 20110
+- Motor 26 -
+Desired position: 2986999
+Actual Position: 2993516
+Displacement: 6517
+- Motor 29 -
+Desired position: 2959156
+Actual Position: 2967277
+Displacement: 8121
+- Motor 21 -
+Desired position: 2947434
+Actual Position: 2926600
+Displacement: 20834
+- Motor 22 -
+Desired position: 2921069
+Actual Position: 2924558
+Displacement: 3489
+- Motor 23 -
+Desired position: 2936210
+Actual Position: 2940561
+Displacement: 4351
+
+At T = 1.0
+- Motor 27 -
+Desired position: 1208744
+Actual Position: 1179087
+Displacement: 29657
+- Motor 28 -
+Desired position: 1177778
+Actual Position: 1180351
+Displacement: 2573
+- Motor 24 -
+Desired position: 1141114
+Actual Position: 1143858
+Displacement: 2744
+- Motor 25 -
+Desired position: 1141962
+Actual Position: 1144398
+Displacement: 2436
+- Motor 26 -
+Desired position: 1154714
+Actual Position: 1158790
+Displacement: 4076
+- Motor 29 -
+Desired position: 1149608
+Actual Position: 1152775
+Displacement: 3167
+- Motor 21 -
+Desired position: 1099789
+Actual Position: 1102027
+Displacement: 2238
+- Motor 22 -
+Desired position: 1098113
+Actual Position: 1100178
+Displacement: 2065
+- Motor 23 -
+Desired position: 1118281
+Actual Position: 1087314
+Displacement: 30967
+
+At T = 1.5
+- Motor 27 -
+Desired position: 57746
+Actual Position: 52824
+Displacement: 4922
+- Motor 28 -
+Desired position: 52128
+Actual Position: 54380
+Displacement: 2252
+- Motor 24 -
+Desired position: 45896
+Actual Position: 47166
+Displacement: 1270
+- Motor 25 -
+Desired position: 46034
+Actual Position: 41353
+Displacement: 4681
+- Motor 26 -
+Desired position: 48155
+Actual Position: 49281
+Displacement: 1126
+- Motor 29 -
+Desired position: 47300
+Actual Position: 42442
+Displacement: 4858
+- Motor 21 -
+Desired position: 39403
+Actual Position: 41141
+Displacement: 1738
+- Motor 22 -
+Desired position: 39152
+Actual Position: 36143
+Displacement: 3009
+- Motor 23 -
+Desired position: 37176
+Actual Position: 38981
+Displacement: 1805
+
+At T = 2.0
+- Motor 27 -
+Desired position: 65380
+Actual Position: 62547
+Displacement: 2833
+- Motor 28 -
+Desired position: 71486
+Actual Position: 66465
+Displacement: 5021
+- Motor 24 -
+Desired position: 72041
+Actual Position: 69505
+Displacement: 2536
+- Motor 25 -
+Desired position: 79317
+Actual Position: 75813
+Displacement: 3504
+- Motor 26 -
+Desired position: 68930
+Actual Position: 64012
+Displacement: 4918
+- Motor 29 -
+Desired position: 77749
+Actual Position: 73002
+Displacement: 4747
+- Motor 21 -
+Desired position: 81506
+Actual Position: 85838
+Displacement: 4332
+- Motor 22 -
+Desired position: 99037
+Actual Position: 94910
+Displacement: 4127
+- Motor 23 -
+Desired position: 85377
+Actual Position: 81782
+Displacement: 3595
+
+At T = 2.5
+- Motor 27 -
+Desired position: 1248214
+Actual Position: 1243211
+Displacement: 5003
+- Motor 28 -
+Desired position: 1277936
+Actual Position: 1274211
+Displacement: 3725
+- Motor 24 -
+Desired position: 1280568
+Actual Position: 1311345
+Displacement: 30777
+- Motor 25 -
+Desired position: 1314020
+Actual Position: 1310356
+Displacement: 3664
+- Motor 26 -
+Desired position: 1265675
+Actual Position: 1298207
+Displacement: 32532
+- Motor 29 -
+Desired position: 1306960
+Actual Position: 1302729
+Displacement: 4231
+- Motor 21 -
+Desired position: 1359246
+Actual Position: 1354758
+Displacement: 4488
+- Motor 22 -
+Desired position: 1396750
+Actual Position: 1393439
+Displacement: 3311
+- Motor 23 -
+Desired position: 1340580
+Actual Position: 1335239
+Displacement: 5341
+
+At T = 3.0
+- Motor 27 -
+Desired position: 3027042
+Actual Position: 3026557
+Displacement: 485
+- Motor 28 -
+Desired position: 3046279
+Actual Position: 3047816
+Displacement: 1537
+- Motor 24 -
+Desired position: 3047955
+Actual Position: 3070567
+Displacement: 22612
+- Motor 25 -
+Desired position: 3068907
+Actual Position: 3069395
+Displacement: 488
+- Motor 26 -
+Desired position: 3038409
+Actual Position: 3061247
+Displacement: 22838
+- Motor 29 -
+Desired position: 3064541
+Actual Position: 3063948
+Displacement: 593
+- Motor 21 -
+Desired position: 3096181
+Actual Position: 3096476
+Displacement: 295
+- Motor 22 -
+Desired position: 3117910
+Actual Position: 3117670
+Displacement: 240
+- Motor 23 -
+Desired position: 3085069
+Actual Position: 3085792
+Displacement: 723
+
+At T = 3.5
+- Motor 27 -
+Desired position: 3499994
+Actual Position: 3497999
+Displacement: 1995
+- Motor 28 -
+Desired position: 3499999
+Actual Position: 3497679
+Displacement: 2320
+- Motor 24 -
+Desired position: 3500000
+Actual Position: 3497203
+Displacement: 2797
+- Motor 25 -
+Desired position: 3500000
+Actual Position: 3497148
+Displacement: 2852
+- Motor 26 -
+Desired position: 3500000
+Actual Position: 3496901
+Displacement: 3099
+- Motor 29 -
+Desired position: 3500000
+Actual Position: 3497056
+Displacement: 2944
+- Motor 21 -
+Desired position: 3499989
+Actual Position: 3496992
+Displacement: 2997
+- Motor 22 -
+Desired position: 3499944
+Actual Position: 3496891
+Displacement: 3053
+- Motor 23 -
+Desired position: 3500000
+Actual Position: 3497138
+Displacement: 2862
+
+At T = 4.0
+- Motor 27 -
+Desired position: 3109454
+Actual Position: 3093940
+Displacement: 15514
+- Motor 28 -
+Desired position: 3091176
+Actual Position: 3097355
+Displacement: 6179
+- Motor 24 -
+Desired position: 3068091
+Actual Position: 3072819
+Displacement: 4728
+- Motor 25 -
+Desired position: 3069180
+Actual Position: 3074165
+Displacement: 4985
+- Motor 26 -
+Desired position: 3077300
+Actual Position: 3081297
+Displacement: 3997
+- Motor 29 -
+Desired position: 3074063
+Actual Position: 3079933
+Displacement: 5870
+- Motor 21 -
+Desired position: 3018709
+Actual Position: 3023737
+Displacement: 5028
+- Motor 22 -
+Desired position: 2993545
+Actual Position: 2999476
+Displacement: 5931
+- Motor 23 -
+Desired position: 3052690
+Actual Position: 3034962
+Displacement: 17728
+
+At T = 4.5
+- Motor 27 -
+Desired position: 1346352
+Actual Position: 1349119
+Displacement: 2767
+- Motor 28 -
+Desired position: 1350796
+Actual Position: 1318577
+Displacement: 32219
+- Motor 24 -
+Desired position: 1312697
+Actual Position: 1317525
+Displacement: 4828
+- Motor 25 -
+Desired position: 1314463
+Actual Position: 1281984
+Displacement: 32479
+- Motor 26 -
+Desired position: 1327728
+Actual Position: 1330919
+Displacement: 3191
+- Motor 29 -
+Desired position: 1322418
+Actual Position: 1291276
+Displacement: 31142
+- Motor 21 -
+Desired position: 1235597
+Actual Position: 1238587
+Displacement: 2990
+- Motor 22 -
+Desired position: 1198396
+Actual Position: 1201316
+Displacement: 2920
+- Motor 23 -
+Desired position: 1288033
+Actual Position: 1256129
+Displacement: 31904
