@@ -10,6 +10,7 @@ def style_GUI():
     main_theme()
     # extra styling
     ttk.Style().configure('Heading.TLabel', font=('Helvetica', 20))
+    #ttk.Style().configure('set.TRadiobutton', background='black', foreground="white")
 
 
 def main_theme():

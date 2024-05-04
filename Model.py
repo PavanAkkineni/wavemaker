@@ -8,7 +8,7 @@ from modules.logging.log_utils import LOGGER_NAME
 from Motor import Motor
 from os import getcwd
 from datetime import date
-from database.database import query_database, update_database
+#from database.database import query_database, update_database
 
 # Authors / Changes Made: TEAM D, COMP523 Fall 23
 
@@ -56,6 +56,8 @@ class Model:
     motdict: Dict[int, int]
     # The list of motors which are active
     live_motors: Dict[int, Motor]
+    live_motors_sets: List[Dict[int, Motor]]
+    live_motors_params: List[Dict[str, int]]
     # Dictionary of attributes associated with each motor,column, or row
     attrcat: Dict[int, Dict[str, IntVar]]
     # Dictionary of attributes from CSV
@@ -76,6 +78,7 @@ class Model:
         """Initializes all state variables, connects to database, and runs live_motor_reset."""
         self.motdict = {}
         self.live_motors = {}
+        self.live_motors_sets=[]
         self.attrcat = {}
         self.csvattrcat = {}
         self.csvlist = []

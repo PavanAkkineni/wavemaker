@@ -154,13 +154,13 @@ class ControlHome:
 
     def color_motors_green(self):
         """Searches through live motors dictionary and displays motors that are on."""
-        for i in range(0, 30):
-            if i in self.model.live_motors:
-                self.circles.itemconfig(
-                    self.model.MOT_CIRCLES[i], fill="light green")
-            else:
+        for i in range(0, 30):                
                 self.circles.itemconfig(
                     self.model.MOT_CIRCLES[i], fill="white")
+        for set in self.model.live_motors_sets:
+            for key in set.keys():
+                self.circles.itemconfig(
+                    self.model.MOT_CIRCLES[key], fill="light green")
 
     ## this is redundant
     def enable_run(self):

@@ -65,7 +65,7 @@ class DefineMotors:
             self.checkButtons.append(Checkbutton(
                 self.motor_frame, text=f'Motor {i}', variable=self.intVars[i], command=partial(model.makedict, i, self.intVars[i])))
             self.checkButtonTips.append(
-                Tooltip(self.checkButtons[i], "Unactivated"))
+                Tooltip(self.checkButtons[i], "Deactivated"))
 
         # Place widgets in self.motor_frame
         for i in range(10):
@@ -75,31 +75,39 @@ class DefineMotors:
 
         root.update()  # update assigns pixel coordinates for checkbuttons.
 
-        self.define_button_moved = ttk.Button(self.button_frame,  text="Activate Selected Motors",
+        self.define_button_moved = ttk.Button(self.button_frame,  text="Add Selected Motors to Set",
                                               command=lambda: self.motor_define()).grid(row=0, column=0)
         ttk.Label(self.button_frame, text='     ').grid(row=0, column=1)
-        self.off_and_reset = ttk.Button(self.button_frame, text="Off and Reset",
+        self.off_and_reset = ttk.Button(self.button_frame, text="Turn Off Live Motors and Reset",
                                         command=lambda: self.motor_off()).grid(row=0, column=2)
+        ttk.Label(self.button_frame, text='     ').grid(row=0, column=3)
 
         # Create Widgets for self.movement_frame
-        self.mov_spec = ttk.Label(self.movement_frame,
-                                  text='Specify Movement')
+        self.curr_set_label = ttk.Label(self.movement_frame,
+                                  text='Activated Sets: ')
+        
+        self.setsStringVar = StringVar()
+        
+        self.sets_label = ttk.Label(self.movement_frame, text=self.setsStringVar.get())
+        self.confirm_sets_button = ttk.Button(self.button_frame, text = 'Confirm Set', command=lambda: self.confirm_select(), state='disabled')
 
-        self.param_button = ttk.Button(self.movement_frame, text='(Parameter Details)',
+        self.param_button = ttk.Button(self.button_frame, text='(Parameter Details)',
                                        command=lambda: self.param_info_click())
-
-        # create specification dropdown
-        self.specify_type_menu = StringVar()
-        self.specify_type_menu.set("Select Specification Method")
-        self.specify_type = OptionMenu(
-            self.movement_frame, self.specify_type_menu, "Define All Live", "Define All Selected", "Define by Row", "Define by Column", command=self.specify_type_select)
+        
+                # create specification dropdown
+        # self.specify_type_menu = StringVar()
+        # self.specify_type_menu.set("Select Specification Method")
+        # self.specify_type = OptionMenu(
+        #     self.movement_frame, self.specify_type_menu, "Define All Live", "Define All Selected", "Define by Row", "Define by Column", command=self.specify_type_select)
         self.selected_motors = []
         self.specify_rc = None
 
         # Place widgets in self.movement_frame
-        self.mov_spec.grid(column=0, row=0, padx=30, pady=30, columnspan=2)
-        self.specify_type.grid(column=2, row=0, padx=(0, 30), pady=15)
+        self.curr_set_label.grid(column=0, row=0, pady=30)
+        self.sets_label.grid(column=1,row=0)
+        #self.specify_type.grid(column=2, row=0, padx=(0, 30), pady=15)
         self.param_button.grid(column=4, row=0, padx=(0, 30))
+        self.confirm_sets_button.grid(column=5,row=0,padx=(0,30))
 
         # create Widgets for self.param_frame
         self.param_input_labels = [ttk.Label(self.param_frame, text=param)
@@ -133,7 +141,7 @@ class DefineMotors:
                                   j].grid(column=i * 2 + 1, row=j + 1, padx=15, pady=15)
 
         # Disable button in movement frame if the on/off buttons aren't enabled
-        self.movement_frame_enable()
+        #self.movement_frame_enable()
         self.param_frame_enable()
         self.color_buttons_green()
 
@@ -144,9 +152,10 @@ class DefineMotors:
         """This method is called when the notebook switched the view to this tab."""
         self.update_checkbutton_tips()
         self.param_frame_enable()
-        self.color_buttons_green()
+        self.color_buttons_green()        
 
     def specify_type_select(self, selected):
+        #THIS FUNCTIONALITY HAS BEEN REMOVED
         """This method is called when a new type is selected in the specify type dropdown."""
         if not self.specify_rc == None:
             self.specify_rc.destroy()
@@ -223,22 +232,74 @@ class DefineMotors:
     def param_info_click(self):
         messagebox.showinfo("Parameter Details", self.position_msg + self.velocity_msg +
                             self.accel_msg + self.jerk_msg + self.profile_msg + self.movtype_msg)
+        
+    def confirm_new_set(self):
+        for i in range(len(self.checkButtons)):
+            if i in self.model.motdict and self.model.motdict[i] == 1:
+                self.checkButtons[i].deselect()
+                self.model.motor_define()
+                self.update_checkbutton_tips()
+                self.color_buttons_green()
+        self.model.live_motors_sets.append(self.model.live_motors)
+        print(self.model.live_motors_sets)
+        self.color_buttons_green()
+        self.confirm_new_button['state'] = 'disabled'
+
+    def motorSet_to_string(self):
+        formatted_output = ""
+        for index, motor_dict in enumerate(self.model.live_motors_sets):
+            formatted_output += f"Set {index +1}: Motors {list(motor_dict.keys())}\n"
+        return formatted_output
+    
+    def confirm_set_confirmation(self):
+        res = messagebox.askquestion("Check before proceeding!", "Are you sure the parameter values you entered are correct? \n You will need to clear all sets and re-enter parameters if not!")
+        if res == 'yes':
+            return True
+        if res == 'no':
+            return False
+            
+
+    def confirm_select(self):
+        if(self.confirm_set_confirmation()): 
+            self.model.live_motors_sets.append(self.model.live_motors.copy())
+            self.confirm_sets_button['state'] = 'disabled'
+            self.selected_motors = []
+            for mot_num in self.model.motdict:
+                if self.model.motdict[mot_num] == 1:
+                    if mot_num in self.model.live_motors:
+                        self.selected_motors.append(
+                            self.model.live_motors[mot_num])
+                        self.model.motdict[mot_num] = 2
+                        self.checkButtons[mot_num]['bg'] = 'pink'
+            if len(self.selected_motors) > 0:
+                for param in self.param_input_vars:
+                    self.param_input_vars[param].set(
+                        str(self.selected_motors[0].write_params[param]))
+                    print(self.selected_motors[0].write_params[param])
+            
+            self.param_frame_enable()
+            self.setsStringVar.set(self.motorSet_to_string())
+            print(self.setsStringVar.get())
+            self.sets_label.config(text = self.setsStringVar.get())
+            print(self.selected_motors)
+            print(self.model.live_motors)
+
 
     def motor_define(self):
         """Calls motor_define on model then updates UI upon response."""
         self.model.motor_define()
-        #self.model.motor_off()
-        #self.model.motor_define()
+        self.confirm_sets_button['state'] = 'enable'
         self.update_checkbutton_tips()
-        self.movement_frame_enable()
+        #self.movement_frame_enable()
         self.color_buttons_green()
 
     def update_checkbutton_tips(self):
         for i in range(30):
             self.checkButtonTips[i].updateText('Unactivated')
-        for key in self.model.live_motors.keys():
-            self.checkButtonTips[key].updateText(
-                self.model.live_motors[key].generate_writter_param_str())
+        for set in self.model.live_motors_sets:
+            for key in set.keys():
+                self.checkButtonTips[key].updateText(
+                    set[key].generate_writter_param_str())
 
     def update_motor_write_params(self, *args, param) -> Any:
         """When a param is edited, update the write_params of all relevant motors."""
@@ -251,6 +312,7 @@ class DefineMotors:
 
     def motor_off(self):
         """Calls motor_off on model then updates UI upon response."""
+        #TODO - CHANGE sets label according to this
         self.model.motor_off()
         for i in range(len(self.checkButtons)):
             if i in self.model.motdict:
@@ -261,16 +323,19 @@ class DefineMotors:
             self.model.live_motor_reset()
         else:
             self.model.mock_live_motor_reset()
+        self.model.live_motors_sets.clear()
+        self.setsStringVar.set("")
+        self.sets_label.config(text = self.setsStringVar.get())
         self.color_buttons_green()
         self.update_checkbutton_tips()
         self.param_frame_enable()
-        self.movement_frame_enable()
+        #self.movement_frame_enable()
 
-    def movement_frame_enable(self):
-        if len(self.model.live_motors) >= 1:
-            self.specify_type['state'] = 'normal'
-        else:
-            self.specify_type['state'] = 'disabled'
+    # def movement_frame_enable(self):
+    #     if len(self.model.live_motors) >= 1:
+    #         self.specify_type['state'] = 'normal'
+    #     else:
+    #         self.specify_type['state'] = 'disabled'
 
     def show_current_param_values(self):
         ...
@@ -292,8 +357,12 @@ class DefineMotors:
                 param['state'] = 'disabled'
 
     def color_buttons_green(self):
+        print(self.model.live_motors_sets)
         for button in self.checkButtons:
             button['bg'] = 'light grey'
+        for set in self.model.live_motors_sets:
+            for key in set.keys():
+                self.checkButtons[key]['bg'] = 'pink'
         for key in self.model.live_motors:
             self.checkButtons[key]['bg'] = 'light green'
 

@@ -1,7 +1,6 @@
 import tkinter as tk
 from tkinter import StringVar, ttk, filedialog, simpledialog
 from typing import Optional
-
 from preset_options.PresetProcessor import PresetProcessor
 from preset_options.Preset import Preset
 from Model import Model
@@ -21,6 +20,7 @@ class PresetOptions:
         self.tab = ttk.Frame(root)
         self.model = model
         self.processor = PresetProcessor(self.model)
+        self.set_Var = tk.IntVar()
 
         # set up and place title and content frames
         self.title_frame = ttk.Frame(self.tab, padding=25)
@@ -35,8 +35,10 @@ class PresetOptions:
         # set up and place preview and control frames
         self.control_frame = ttk.Frame(self.content_frame)
         self.preview_frame = ttk.Frame(self.content_frame)
+        self.set_frame = ttk.Frame(self.content_frame)
         self.control_frame.grid(row=0, column=0, padx=(20, 50))
         self.preview_frame.grid(row=0, column=1)
+        self.set_frame.grid(row=1,column=0,padx=(20,40))
 
         # create and place buttons inside control frame, disable apply button
         self.select_button = ttk.Button(
@@ -51,6 +53,10 @@ class PresetOptions:
         ttk.Label(self.control_frame, text='  ').grid(column=0, row=3)
         self.create_button.grid(column=0, row=4)
         self.enable_apply_preset()
+
+        #create set choice
+        self.set_select_label = ttk.Label(self.set_frame, text = 'Select which set you would like this preset to apply to: ')
+        self.set_select_label.grid(column=0,row=0)
 
         # create and place widgets for param preview frame display
         self.param_input_vars = {param: StringVar()
@@ -71,6 +77,14 @@ class PresetOptions:
     def onSelect(self):
         """This method is called when the notebook switched the view to this tab."""
         self.enable_apply_preset()
+        for index, motor_dict in enumerate(self.model.live_motors_sets):
+            self.radbutton = ttk.Radiobutton(self.set_frame, text = f"Set {index +1}: Motors {list(motor_dict.keys())}\n", 
+                            variable=self.set_Var, value=index, command=self.selectedSet())
+            self.radbutton.grid(column=0,row=index+1)
+
+
+    def selectedSet(self):
+        pass
 
     def browse(self):
         """Function to browse for desired preset file. Need to change to correct starting directory"""
@@ -86,8 +100,9 @@ class PresetOptions:
                 "Internal Error: Could not open the specified file name.")
 
     def apply_preset(self):
-        if (self.loadedPreset is not None):
-            for mot_num, motor in self.model.live_motors.items():
+        if (self.loadedPreset is not None) and (self.set_Var is not None):
+            selected_Set = self.model.live_motors_sets[self.set_Var.get()]
+            for mot_num, motor in selected_Set.items():
                 for key, value in self.loadedPreset.rows[mot_num].items():
                     motor.write_params[key] = value
 
