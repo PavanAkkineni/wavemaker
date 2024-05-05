@@ -8,7 +8,7 @@ from modules.logging.log_utils import LOGGER_NAME
 from Motor import Motor
 from os import getcwd
 from datetime import date
-#from database.database import query_database, update_database
+from database.database import query_database, update_database
 
 # Authors / Changes Made: TEAM D, COMP523 Fall 23
 
