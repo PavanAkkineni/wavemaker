@@ -12,6 +12,6 @@ ControlHome.py <br>
 Motor.py
 
 ## Install Notes
-Download  as a zip file onto a USB
-Copy the files onto the lab computer. On the Desktop there is a file called Open_WaveMaker _GUI_Spring24.cmd, open in Notepad++. Edit the final command and change the file path to the main.py file you installed onto the lab computer.
-On the lab computer open the Open_WaveMaker _GUI_Spring24.exe shortcut. This should load Studio5000 and the GUI. Remember to follow the order of steps in the user manual when using the WaveMaker
+Download  as a zip file onto a USB. <br>
+Copy the files onto the lab computer. On the Desktop there is a file called Open_WaveMaker _GUI_Spring24.cmd, open in Notepad++. Edit the final command and change the file path to the main.py file you installed onto the lab computer. <br>
+On the lab computer open the Open_WaveMaker _GUI_Spring24.exe shortcut. This should load Studio5000 and the GUI. Remember to follow the order of steps in the user manual when using the WaveMaker. <br>
