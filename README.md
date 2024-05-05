@@ -1,4 +1,4 @@
-# WaveMakerFA23
+# WaveMakerSpring24
 
 ## Spring 24 Group I
 Goal Accomplished: Enable simultaneous control of pistons with indivdually unique parameters. It allows the user to easily access and adjust velocity and curve of each piston and define parameters for a set of pistons. Multiple sets of pistons can be defined with different parameteres and run simultaneously. Presets can also be applied to these sets of motors.
