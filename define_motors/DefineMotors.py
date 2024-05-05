@@ -232,18 +232,6 @@ class DefineMotors:
     def param_info_click(self):
         messagebox.showinfo("Parameter Details", self.position_msg + self.velocity_msg +
                             self.accel_msg + self.jerk_msg + self.profile_msg + self.movtype_msg)
-        
-    def confirm_new_set(self):
-        for i in range(len(self.checkButtons)):
-            if i in self.model.motdict and self.model.motdict[i] == 1:
-                self.checkButtons[i].deselect()
-                self.model.motor_define()
-                self.update_checkbutton_tips()
-                self.color_buttons_green()
-        self.model.live_motors_sets.append(self.model.live_motors)
-        print(self.model.live_motors_sets)
-        self.color_buttons_green()
-        self.confirm_new_button['state'] = 'disabled'
 
     def motorSet_to_string(self):
         formatted_output = ""
@@ -274,12 +262,9 @@ class DefineMotors:
             if len(self.selected_motors) > 0:
                 for param in self.param_input_vars:
                     self.param_input_vars[param].set(
-                        str(self.selected_motors[0].write_params[param]))
-                    print(self.selected_motors[0].write_params[param])
-            
+                        str(self.selected_motors[0].write_params[param]))            
             self.param_frame_enable()
             self.setsStringVar.set(self.motorSet_to_string())
-            print(self.setsStringVar.get())
             self.sets_label.config(text = self.setsStringVar.get())
             print(self.selected_motors)
             print(self.model.live_motors)
@@ -357,7 +342,6 @@ class DefineMotors:
                 param['state'] = 'disabled'
 
     def color_buttons_green(self):
-        print(self.model.live_motors_sets)
         for button in self.checkButtons:
             button['bg'] = 'light grey'
         for set in self.model.live_motors_sets:

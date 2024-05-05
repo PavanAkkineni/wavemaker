@@ -106,26 +106,29 @@ class Model:
         self.motdict[motnum] = IO.get()
 
     def check_run_enable(self):
-        if len(self.live_motors) == 0:
+        if (len(self.live_motors_sets) == 0) and (len(self.live_motors) == 0):
             self.RUN_ENABLE = False
         else:
-            for motor in self.live_motors.values():
-                self.RUN_ENABLE = True
-                if not motor.valid_write_dict():
-                    self.RUN_ENABLE = False
+            for set in self.live_motors_sets:
+                for motor in set.values():
+                    self.RUN_ENABLE = True
+                    if not motor.valid_write_dict():
+                        self.RUN_ENABLE = False
 
     def write_success(self) -> bool:
-        for motor in self.live_motors.values():
-            if not motor.write_success:
-                return False
-        return True
+        for set in self.live_motors_sets:
+            for motor in set.values():
+                if not motor.write_success:
+                    return False
+            return True
 
     def written_matches_current(self) -> bool:
-        for motor in self.live_motors.values():
-            for attr in motor.write_params:
-                if motor.write_params[attr] != motor.current_params[attr]:
-                    return False
-        return True
+        for set in self.live_motors_sets:
+            for motor in set.values():
+                for attr in motor.write_params:
+                    if motor.write_params[attr] != motor.current_params[attr]:
+                        return False
+            return True
 
 
     def register_view(self, view):
@@ -229,12 +232,14 @@ class Model:
                         comm.GetProgramTagList('Program:Wave_Control')
                         time.sleep(5)
                         motCount = 0
-                        for motor in self.live_motors.values():
-                            # homed is a method of the motor class which checks the Status Word bit for if the motor is in a home position
-                            if motor.homed(self.IP_ADDRESS, self.PROCESSOR_SLOT) == True:
-                                motCount += 1
+                        for set in self.live_motors_sets:
+                            for motor in set.values():
+                                # homed is a method of the motor class which checks the Status Word bit for if the motor is in a home position
+                                if motor.homed(self.IP_ADDRESS, self.PROCESSOR_SLOT) == True:
+                                    motCount += 1
 
-                        if motCount == len(self.live_motors):
+                        total_keys = sum(len(d) for d in self.live_motors_sets)
+                        if motCount == total_keys:
                             comm.Write('Program:Wave_Control.Home_Button', 0)
                             tracker = 0
                             if count == 1:
@@ -264,11 +269,14 @@ class Model:
         if (len(self.motdict) == 0):
             self.RUN_ENABLE = False
         for key, value in self.motdict.items():
-            if value == 1:
+            print(self.motdict)
+            if value == 1 or value == 2:
                 # Create the instance of the motor class
                 LiveMotor = Motor(key, self.CONNECTED)
                 # Associate that instance of the motor class with the motor number in a dictionary
                 self.live_motors[LiveMotor.axis_ID] = LiveMotor
+                print(self.live_motors)
+                #print(self.live_motor_sets)
                 # Change the boolean switch in the PLC code to correspond with Live_Motors
                 if self.CONNECTED:
                     with PLC() as comm:
@@ -289,7 +297,7 @@ class Model:
                     # Deletes the entry from the Live_Motors dictionary
                     del self.live_motors[key]
         ##self.motor_off()
-        
+            
         if self.CONNECTED:
             with PLC() as comm:
                 comm.IPAddress = self.IP_ADDRESS
@@ -314,15 +322,16 @@ class Model:
         max_runs = 10000
         runs = 0
         handle.write("\n" + "----- Run " + str(time.asctime()) + "-----\n" + "                 ")
-        for motor in self.live_motors:
-            # DO NOT DELETE
-            # Creating aux_str to label motor
-            aux_str = "Motor "+str(motor)
+        for set in self.live_motors_sets:
+            for motor in set:
+                # DO NOT DELETE
+                # Creating aux_str to label motor
+                aux_str = "Motor "+str(motor)
 
-            # Creating entry in db_data
-            db_data[aux_str] = {}
+                # Creating entry in db_data
+                db_data[aux_str] = {}
 
-            handle.write(f"motor {motor:<18d}")
+                handle.write(f"motor {motor:<18d}")
         handle.write("\n"+"t           ")
         for motor in self.live_motors:
             handle.write("demand      actual      ")
@@ -487,18 +496,20 @@ class Model:
                 comm.IPAddress = self.IP_ADDRESS
                 comm.ProcessorSlot = self.PROCESSOR_SLOT
                 comm.Write('Program:Wave_Control.Live_Motors.{}'.format(x), 0)
+        self.live_motor_sets = []
         self.live_motors = {}
 
     def live_motor_reset_mock(self):
         """MOCK to write all zeroes to the Live motors array. 
         This method is used to check if the motors are connected 
         on init so it is not protected by a self.CONNECTED check."""
-
+        self.live_motor_sets = []
         self.live_motors = {}
 
     def mock_live_motor_reset(self):
         """Method to mock a live motor reset since the actual
         live motor reset tries to connect with motors."""
+        self.live_motor_sets = []
         self.live_motors = {}
 
     def get_rows(self) -> List[int]:
@@ -545,8 +556,10 @@ class Model:
 
     def attr_write(self):
         """Writes attributes to motors and returns true upon success."""
-
-        for motor in self.live_motors.values():
-            motor.write_to_motor(self.IP_ADDRESS, self.PROCESSOR_SLOT)
+        for set in self.live_motors_sets:
+            for motor in set.values():
+                motor.write_to_motor(self.IP_ADDRESS, self.PROCESSOR_SLOT)
+        # for motor in self.live_motors.values():
+        #     motor.write_to_motor(self.IP_ADDRESS, self.PROCESSOR_SLOT)
 
         self.LOGGER.log(15, 'Successfully wrote to motors.')
