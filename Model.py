@@ -101,9 +101,10 @@ class Model:
         except:
             self.CONNECTED = False
 
-    
-    def makedict(self, motnum: int, IO: IntVar):
-        self.motdict[motnum] = IO.get()
+    # Runs when any checkButton is ticked, creates motdict: {motor number: ON/OFF (1/0)}
+    def onCheck(self, motnum: int, IO: IntVar):
+        if(self.motdict[motnum] != 2):
+            self.motdict[motnum] = IO.get()
 
     def check_run_enable(self):
         if (len(self.live_motors_sets) == 0) and (len(self.live_motors) == 0):
@@ -270,13 +271,28 @@ class Model:
             self.RUN_ENABLE = False
         for key, value in self.motdict.items():
             print(self.motdict)
-            if value == 1 or value == 2:
+            if value == 1:
                 # Create the instance of the motor class
                 LiveMotor = Motor(key, self.CONNECTED)
                 # Associate that instance of the motor class with the motor number in a dictionary
                 self.live_motors[LiveMotor.axis_ID] = LiveMotor
                 print(self.live_motors)
                 #print(self.live_motor_sets)
+                # Change the boolean switch in the PLC code to correspond with Live_Motors
+                if self.CONNECTED:
+                    with PLC() as comm:
+                        comm.IPAddress = self.IP_ADDRESS
+                        comm.ProcessorSlot = self.PROCESSOR_SLOT
+                        comm.Write(
+                            'Program:Wave_Control.Live_Motors.{0}'.format(key), value)
+            # The value in motdict is 0. So the motor should be turned off and deleted from the Live_Motor dict
+            if value == 2:
+                # Create the instance of the motor class
+                LiveMotor = Motor(key, self.CONNECTED)
+                # Associate that instance of the motor class with the motor number in a dictionary
+                print(self.live_motors)
+                if (key in self.live_motors.keys()):
+                    del self.live_motors[key]
                 # Change the boolean switch in the PLC code to correspond with Live_Motors
                 if self.CONNECTED:
                     with PLC() as comm:
@@ -553,6 +569,15 @@ class Model:
             motor_list.append(key)
         motor_list.sort()
         return motor_list
+    
+    def turnOn_motors(self):
+        """Turns on motors AFTER pressing 'prepare motors' on control home"""
+        for set in self.live_motor_sets:
+            for motnum, motor in set.items():
+                if (self.motdict[motnum]==1 or 2):
+                    pass
+
+
 
     def attr_write(self):
         """Writes attributes to motors and returns true upon success."""

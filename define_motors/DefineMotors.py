@@ -61,9 +61,9 @@ class DefineMotors:
         self.checkButtons: List[Checkbutton] = []
         self.checkButtonTips: List[Tooltip] = []
         for i in range(30):
-
             self.checkButtons.append(Checkbutton(
-                self.motor_frame, text=f'Motor {i}', variable=self.intVars[i], command=partial(model.makedict, i, self.intVars[i])))
+                self.motor_frame, text=f'Motor {i}', variable=self.intVars[i], command=partial(model.onCheck, i, self.intVars[i])))
+            self.model.motdict[i] = 0
             self.checkButtonTips.append(
                 Tooltip(self.checkButtons[i], "Deactivated"))
 
@@ -266,6 +266,7 @@ class DefineMotors:
             self.param_frame_enable()
             self.setsStringVar.set(self.motorSet_to_string())
             self.sets_label.config(text = self.setsStringVar.get())
+            print(self.model.motdict)
             print(self.selected_motors)
             print(self.model.live_motors)
 
@@ -347,6 +348,9 @@ class DefineMotors:
         for set in self.model.live_motors_sets:
             for key in set.keys():
                 self.checkButtons[key]['bg'] = 'pink'
+        for mot, value in self.model.motdict.items():
+            if value == 2:
+                self.checkButtons[mot]['bg'] = 'pink'
         for key in self.model.live_motors:
             self.checkButtons[key]['bg'] = 'light green'
 
