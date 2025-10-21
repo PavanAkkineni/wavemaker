@@ -292,8 +292,14 @@ class DefineMotors:
         new_val: str = self.param_input_vars[param].get()
         if new_val.lstrip('-').isnumeric():
             int_val: int = int(new_val)
+            # FIX: Update parameters for ALL motors in all sets, not just selected_motors
+            # This allows parameter changes even after motors are confirmed into sets
             for motor in self.selected_motors:
                 motor.write_params[param] = int_val
+            # Also update all motors in confirmed sets
+            for motor_set in self.model.live_motors_sets:
+                for motor in motor_set.values():
+                    motor.write_params[param] = int_val
             self.update_checkbutton_tips()
 
     def motor_off(self):
@@ -325,16 +331,29 @@ class DefineMotors:
 
     def show_current_param_values(self):
         ...
-        if (self.model.live_motors != {}):
-            selected = [
-                motor for motor in self.model.live_motors.values()]
-            if len(selected) > 0:
-                for param in self.param_input_vars:
-                    self.param_input_vars[param].set(
-                        str(selected[0].write_params[param]))
+        # FIX: Show parameters from confirmed sets, not just live_motors
+        # This ensures parameter fields display correct values for all motors
+        motors_to_show = []
+        
+        # First check if there are motors in sets
+        if len(self.model.live_motors_sets) > 0:
+            for motor_set in self.model.live_motors_sets:
+                motors_to_show.extend(motor_set.values())
+        # Otherwise check live_motors
+        elif self.model.live_motors != {}:
+            motors_to_show = list(self.model.live_motors.values())
+        
+        if len(motors_to_show) > 0:
+            for param in self.param_input_vars:
+                self.param_input_vars[param].set(
+                    str(motors_to_show[0].write_params[param]))
 
     def param_frame_enable(self):
-        if (self.model.live_motors != {}):
+        # FIX: Enable parameter editing if there are motors in sets OR live_motors
+        # This allows parameter changes after motors are confirmed into sets
+        has_motors = (self.model.live_motors != {}) or (len(self.model.live_motors_sets) > 0)
+        
+        if has_motors:
             for param in self.param_inputs:
                 param['state'] = 'normal'
             self.show_current_param_values()

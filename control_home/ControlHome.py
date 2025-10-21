@@ -224,6 +224,20 @@ class ControlHome:
         self.start_button['state'] = 'disabled'
         self.curve_button['state'] = 'disabled'
         ##self.prepare_button['state'] = 'disabled'
+        
+        # FIX: Check if parameters have changed since last write and re-write them
+        # This allows parameter updates after stopping without requiring rehoming
+        if not self.model.written_matches_current():
+            self.msgvar.set('Parameters changed - updating motors...')
+            self.model.attr_write()
+            # Wait for write to complete
+            self.tab.after(1000, lambda: self._continue_start_motors(motion_type, is_curve))
+            return
+        
+        self._continue_start_motors(motion_type, is_curve)
+    
+    def _continue_start_motors(self, motion_type: int, is_curve: bool):
+        """Continue starting motors after parameter update (if needed)."""
         if self.model.RECORD_ANALYTICS and (motion_type == 2 or is_curve):
             self.update_analytics()
             self.progress_bar=Canvas(self.content_frame,bg="white",width = 450,height = 20)    
@@ -247,8 +261,6 @@ class ControlHome:
             #self.tab.after(2000, lambda: self.msgvar.set('Motors running'))
         
         ## may want to wait for the thread to end here
-
-        
         
         ##self.stop_button['state']='normal'
         ## print(self.model.ANALYTICS_DURATION)
