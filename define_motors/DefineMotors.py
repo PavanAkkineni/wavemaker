@@ -85,29 +85,33 @@ class DefineMotors:
         # Create Widgets for self.movement_frame
         self.curr_set_label = ttk.Label(self.movement_frame,
                                   text='Activated Sets: ')
-        
+
         self.setsStringVar = StringVar()
-        
+
         self.sets_label = ttk.Label(self.movement_frame, text=self.setsStringVar.get())
         self.confirm_sets_button = ttk.Button(self.button_frame, text = 'Confirm Set', command=lambda: self.confirm_select(), state='disabled')
 
         self.param_button = ttk.Button(self.button_frame, text='(Parameter Details)',
                                        command=lambda: self.param_info_click())
-        
-                # create specification dropdown
-        # self.specify_type_menu = StringVar()
-        # self.specify_type_menu.set("Select Specification Method")
-        # self.specify_type = OptionMenu(
-        #     self.movement_frame, self.specify_type_menu, "Define All Live", "Define All Selected", "Define by Row", "Define by Column", command=self.specify_type_select)
+
+        # Add dropdown to select which set to edit
+        self.edit_set_label = ttk.Label(self.movement_frame, text='Edit Set:')
+        self.edit_set_var = StringVar()
+        self.edit_set_var.set("New Motors")
+        self.edit_set_menu = OptionMenu(
+            self.movement_frame, self.edit_set_var, "New Motors", command=self.on_set_selection_changed)
+
         self.selected_motors = []
         self.specify_rc = None
+        self.currently_editing_set_index = None  # Track which set is being edited
 
         # Place widgets in self.movement_frame
         self.curr_set_label.grid(column=0, row=0, pady=30)
-        self.sets_label.grid(column=1,row=0)
-        #self.specify_type.grid(column=2, row=0, padx=(0, 30), pady=15)
+        self.sets_label.grid(column=1, row=0)
+        self.edit_set_label.grid(column=2, row=0, padx=(30, 5))
+        self.edit_set_menu.grid(column=3, row=0, padx=(0, 30))
         self.param_button.grid(column=4, row=0, padx=(0, 30))
-        self.confirm_sets_button.grid(column=5,row=0,padx=(0,30))
+        self.confirm_sets_button.grid(column=5, row=0, padx=(0, 30))
 
         # create Widgets for self.param_frame
         self.param_input_labels = [ttk.Label(self.param_frame, text=param)
@@ -151,6 +155,7 @@ class DefineMotors:
     def onSelect(self):
         """This method is called when the notebook switched the view to this tab."""
         self.update_checkbutton_tips()
+        self.update_set_dropdown()
         self.param_frame_enable()
         self.color_buttons_green()        
 
@@ -233,6 +238,57 @@ class DefineMotors:
         messagebox.showinfo("Parameter Details", self.position_msg + self.velocity_msg +
                             self.accel_msg + self.jerk_msg + self.profile_msg + self.movtype_msg)
 
+    def update_set_dropdown(self):
+        """Updates the Edit Set dropdown menu with current sets."""
+        # Clear existing menu options
+        menu = self.edit_set_menu["menu"]
+        menu.delete(0, "end")
+
+        # Add "New Motors" option
+        menu.add_command(label="New Motors",
+                        command=lambda: self.set_edit_selection("New Motors"))
+
+        # Add each confirmed set
+        for index, motor_set in enumerate(self.model.live_motors_sets):
+            set_name = f"Set {index + 1}: Motors {list(motor_set.keys())}"
+            menu.add_command(label=set_name,
+                           command=lambda idx=index, name=set_name: self.set_edit_selection(name, idx))
+
+    def set_edit_selection(self, set_name, set_index=None):
+        """Called when user selects a set to edit from dropdown."""
+        self.edit_set_var.set(set_name)
+        self.currently_editing_set_index = set_index
+
+        if set_index is None:
+            # Editing new motors (not a confirmed set)
+            self.selected_motors = []
+            for mot_num in self.model.motdict:
+                if self.model.motdict[mot_num] == 1:
+                    if mot_num in self.model.live_motors:
+                        self.selected_motors.append(self.model.live_motors[mot_num])
+        else:
+            # Editing a confirmed set
+            motor_set = self.model.live_motors_sets[set_index]
+            self.selected_motors = list(motor_set.values())
+
+        # Update parameter fields to show selected set's current values
+        if len(self.selected_motors) > 0:
+            for param in self.param_input_vars:
+                self.param_input_vars[param].set(
+                    str(self.selected_motors[0].write_params[param]))
+
+        self.param_frame_enable()
+
+    def on_set_selection_changed(self, selection):
+        """Callback for when dropdown selection changes."""
+        # This is called by OptionMenu, parse the selection
+        if "Set" in selection and "Motors" in selection:
+            # Extract set index from selection like "Set 1: Motors [0, 1, 2]"
+            set_num = int(selection.split("Set ")[1].split(":")[0])
+            self.set_edit_selection(selection, set_num - 1)
+        else:
+            self.set_edit_selection(selection, None)
+
     def motorSet_to_string(self):
         formatted_output = ""
         for index, motor_dict in enumerate(self.model.live_motors_sets):
@@ -248,7 +304,7 @@ class DefineMotors:
             
 
     def confirm_select(self):
-        if(self.confirm_set_confirmation()): 
+        if(self.confirm_set_confirmation()):
             self.model.live_motors_sets.append(self.model.live_motors.copy())
             self.confirm_sets_button['state'] = 'disabled'
             self.selected_motors = []
@@ -262,10 +318,12 @@ class DefineMotors:
             if len(self.selected_motors) > 0:
                 for param in self.param_input_vars:
                     self.param_input_vars[param].set(
-                        str(self.selected_motors[0].write_params[param]))            
+                        str(self.selected_motors[0].write_params[param]))
             self.param_frame_enable()
             self.setsStringVar.set(self.motorSet_to_string())
             self.sets_label.config(text = self.setsStringVar.get())
+            # Update the dropdown to show the new set
+            self.update_set_dropdown()
             print(self.model.motdict)
             print(self.selected_motors)
             print(self.model.live_motors)
@@ -292,14 +350,18 @@ class DefineMotors:
         new_val: str = self.param_input_vars[param].get()
         if new_val.lstrip('-').isnumeric():
             int_val: int = int(new_val)
-            # FIXED: Only update motors that are currently being edited (selected_motors and live_motors)
-            # This prevents parameter changes from affecting already-confirmed motor sets
-            # Update motors in the working selection
-            for motor in self.selected_motors:
-                motor.write_params[param] = int_val
-            # Update motors in live_motors (before they're confirmed to a set)
-            for motor in self.model.live_motors.values():
-                motor.write_params[param] = int_val
+            # Update parameters based on what's being edited via the dropdown
+            if self.currently_editing_set_index is not None:
+                # Editing a confirmed set - update only that set's motors
+                motor_set = self.model.live_motors_sets[self.currently_editing_set_index]
+                for motor in motor_set.values():
+                    motor.write_params[param] = int_val
+            else:
+                # Editing new motors (not yet confirmed to a set)
+                for motor in self.selected_motors:
+                    motor.write_params[param] = int_val
+                for motor in self.model.live_motors.values():
+                    motor.write_params[param] = int_val
             self.update_checkbutton_tips()
 
     def motor_off(self):
@@ -318,6 +380,10 @@ class DefineMotors:
         self.model.live_motors_sets.clear()
         self.setsStringVar.set("")
         self.sets_label.config(text = self.setsStringVar.get())
+        # Reset the dropdown and editing state
+        self.currently_editing_set_index = None
+        self.update_set_dropdown()
+        self.edit_set_var.set("New Motors")
         self.color_buttons_green()
         self.update_checkbutton_tips()
         self.param_frame_enable()
