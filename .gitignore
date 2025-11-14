@@ -1,0 +1,35 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+.venv/
+venv/
+ENV/
+env/
+
+# UV
+.uv/
+
+# Testing
+.pytest_cache/
+.coverage
+htmlcov/
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# Analytics data
+analytics/
+
+# Personal documentation (keep local, don't push)
+PER_SET_PARAMETERS_FEATURE.md
+
+# OS
+.DS_Store
+Thumbs.db
