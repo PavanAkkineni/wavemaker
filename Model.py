@@ -389,6 +389,22 @@ class Model:
         """This command will commence motion.
         Stroke should be a 1 or 2 depending on if a single stroke is wanted or cyclical motion."""
 
+        # DEBUG: Show parameters for each motor set before starting
+        print("\n" + "="*80)
+        print("STARTING MOTORS - Parameter Summary:")
+        print("="*80)
+        for set_idx, motor_set in enumerate(self.live_motors_sets):
+            print(f"\nSet {set_idx + 1} - Motors {list(motor_set.keys())}:")
+            if len(motor_set) > 0:
+                first_motor = list(motor_set.values())[0]
+                # Check write_params (what the motors are configured to use)
+                print(f"  Speed 1: {first_motor.write_params.get('Speed 1', 'Not set')}")
+                print(f"  Speed 2: {first_motor.write_params.get('Speed 2', 'Not set')}")
+                print(f"  Position 1: {first_motor.write_params.get('Position 1', 'Not set')}")
+                print(f"  Position 2: {first_motor.write_params.get('Position 2', 'Not set')}")
+                print(f"  Accel 1: {first_motor.write_params.get('Accel 1', 'Not set')}")
+        print("="*80 + "\n")
+
         # For a single stroke, stroke = 1. Run_1 is set to true on the PLC and the code runs. 5 seconds later Run_1 is set False
         if stroke == 1:
             if tracker == 1:
