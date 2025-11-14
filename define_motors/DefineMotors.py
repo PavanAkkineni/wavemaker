@@ -292,14 +292,14 @@ class DefineMotors:
         new_val: str = self.param_input_vars[param].get()
         if new_val.lstrip('-').isnumeric():
             int_val: int = int(new_val)
-            # FIX: Update parameters for ALL motors in all sets, not just selected_motors
-            # This allows parameter changes even after motors are confirmed into sets
+            # FIXED: Only update motors that are currently being edited (selected_motors and live_motors)
+            # This prevents parameter changes from affecting already-confirmed motor sets
+            # Update motors in the working selection
             for motor in self.selected_motors:
                 motor.write_params[param] = int_val
-            # Also update all motors in confirmed sets
-            for motor_set in self.model.live_motors_sets:
-                for motor in motor_set.values():
-                    motor.write_params[param] = int_val
+            # Update motors in live_motors (before they're confirmed to a set)
+            for motor in self.model.live_motors.values():
+                motor.write_params[param] = int_val
             self.update_checkbutton_tips()
 
     def motor_off(self):
