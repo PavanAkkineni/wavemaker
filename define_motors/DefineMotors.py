@@ -274,10 +274,19 @@ class DefineMotors:
         # Update parameter fields to show selected set's current values
         if len(self.selected_motors) > 0:
             for param in self.param_input_vars:
-                self.param_input_vars[param].set(
-                    str(self.selected_motors[0].write_params[param]))
+                value = str(self.selected_motors[0].write_params[param])
+                self.param_input_vars[param].set(value)
+            # Force UI update
+            self.root.update_idletasks()
 
-        self.param_frame_enable()
+        # Enable fields but DON'T call show_current_param_values since we just set the values above
+        has_motors = (self.model.live_motors != {}) or (len(self.model.live_motors_sets) > 0)
+        if has_motors:
+            for param in self.param_inputs:
+                param['state'] = 'normal'
+        else:
+            for param in self.param_inputs:
+                param['state'] = 'disabled'
 
     def on_set_selection_changed(self, selection):
         """Callback for when dropdown selection changes."""
@@ -305,7 +314,12 @@ class DefineMotors:
 
     def confirm_select(self):
         if(self.confirm_set_confirmation()):
-            self.model.live_motors_sets.append(self.model.live_motors.copy())
+            # Create deep copy of motors to ensure each set has independent Motor objects
+            import copy
+            motors_deep_copy = {}
+            for motor_id, motor_obj in self.model.live_motors.items():
+                motors_deep_copy[motor_id] = copy.deepcopy(motor_obj)
+            self.model.live_motors_sets.append(motors_deep_copy)
             self.confirm_sets_button['state'] = 'disabled'
             self.selected_motors = []
             for mot_num in self.model.motdict:
@@ -315,6 +329,8 @@ class DefineMotors:
                             self.model.live_motors[mot_num])
                         self.model.motdict[mot_num] = 2
                         self.checkButtons[mot_num]['bg'] = 'pink'
+            # CRITICAL: Clear live_motors so confirmed motors don't get updated by future parameter changes
+            self.model.live_motors.clear()
             if len(self.selected_motors) > 0:
                 for param in self.param_input_vars:
                     self.param_input_vars[param].set(
@@ -324,9 +340,6 @@ class DefineMotors:
             self.sets_label.config(text = self.setsStringVar.get())
             # Update the dropdown to show the new set
             self.update_set_dropdown()
-            print(self.model.motdict)
-            print(self.selected_motors)
-            print(self.model.live_motors)
 
 
     def motor_define(self):
@@ -336,6 +349,8 @@ class DefineMotors:
         self.update_checkbutton_tips()
         #self.movement_frame_enable()
         self.color_buttons_green()
+        # Enable parameter fields so user can customize before confirming
+        self.param_frame_enable()
 
     def update_checkbutton_tips(self):
         for i in range(30):
