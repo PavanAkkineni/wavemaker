@@ -30,7 +30,9 @@ def query_database(query):
     return collection.find(query)
 
 
-runs = query_database({})
+# Only run this if executing database.py directly (not when imported)
+if __name__ == "__main__":
+    runs = query_database({})
 
-for run in runs:
-    print(run)
+    for run in runs:
+        print(run)
