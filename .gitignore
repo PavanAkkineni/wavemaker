@@ -1,0 +1,7 @@
+# Exclude documents folder
+documents/
+
+# Python
+__pycache__/
+*.pyc
+*.pyo

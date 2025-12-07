@@ -91,6 +91,8 @@ class Model:
 
         # UNPREPARED_STATE:0, HOMED_STATE:1, RUNNING_STATE:2
         self.state = -1
+        # Flag to track when homing is in progress (prevents button re-enabling during tab switch)
+        self.is_homing = False
 
         # Reset Live motor array on the PLC to all 0s to ensure only operating on intended motors
         # If the live_motor_reset fails then the motors are not actually connected
@@ -117,26 +119,37 @@ class Model:
                         self.RUN_ENABLE = False
 
     def write_success(self) -> bool:
-        for set in self.live_motors_sets:
-            for motor in set.values():
+        """Check if ALL motors in all sets were successfully written to."""
+        for motor_set in self.live_motors_sets:
+            for motor in motor_set.values():
                 if not motor.write_success:
                     return False
-            return True
+        return True  # Only return True after checking ALL motors in ALL sets
 
     def written_matches_current(self) -> bool:
-        for set in self.live_motors_sets:
-            for motor in set.values():
+        """Check if write_params match current_params for ALL motors in all sets."""
+        for motor_set in self.live_motors_sets:
+            for motor in motor_set.values():
                 for attr in motor.write_params:
+                    # If current_params doesn't have this attr, it was never written
+                    if attr not in motor.current_params:
+                        return False
                     if motor.write_params[attr] != motor.current_params[attr]:
                         return False
-            return True
+        return True  # Only return True after checking ALL motors in ALL sets
 
 
     def register_view(self, view):
         self.view = view
 
+    def register_define_motors_view(self, define_motors_view):
+        self.define_motors_view = define_motors_view
+
     def notify_view(self):
         self.view.update_button_status()
+        # Also notify DefineMotors view if registered
+        if hasattr(self, 'define_motors_view') and self.define_motors_view is not None:
+            self.define_motors_view.update_stop_button_status()
 
     def motor_on(self):
         """Flip the boolean motor on switch in the PLC code."""
@@ -194,6 +207,7 @@ class Model:
 
 
     def thread_motor_home(self):
+        self.is_homing = True  # Set flag before starting homing thread
         Thread(target=self.motor_home).start()
 
     def motor_home(self):
@@ -246,6 +260,7 @@ class Model:
                             if count == 1:
                                 self.LOGGER.info('Motor(s) Homed')
                                 self.state = 1
+                                self.is_homing = False  # Clear before notify
                                 self.notify_view()
                                 self.view.update_msg('Motor(s) Homed')
                             break
@@ -253,6 +268,7 @@ class Model:
                         if looptrack > loopend:
                             comm.Write('Program:Wave_Control.Home_Button', 0)
                             if count == 1:
+                                self.is_homing = False  # Clear before notify
                                 self.notify_view()
                                 self.view.update_msg('Unable to Home Motors: Execution timed out after 40 sec')
                                 self.LOGGER.error('Unable to Home Motors: Execution timed out after 40 sec')
@@ -261,7 +277,11 @@ class Model:
                 time.sleep(5)
                 self.LOGGER.info('Motor(s) mock Homed')
                 self.state = 1
+                self.is_homing = False  # Clear before notify
                 self.notify_view()
+        
+        # Ensure homing flag is cleared (safety fallback)
+        self.is_homing = False
         #self.home_lock.release()
 
     def motor_define(self):
@@ -394,7 +414,11 @@ class Model:
             if tracker == 1:
                 self.LOGGER.warning(
                     'Motor(s) are already STOPPED on single stroke run')
-                self.state = 0
+                # FIX: Keep state as HOMED (1) - motors are stopped but still homed
+                if self.state == -1:
+                    self.state = 0  # Never prepared, need to prepare
+                else:
+                    self.state = 1  # Already homed, can run again
                 self.notify_view()
             else:
                 if self.CONNECTED:
@@ -407,12 +431,14 @@ class Model:
                         comm.Write('Program:Wave_Control.Run_1', 0)
                         self.view.update_msg('Motor(s) Stopped')
                         self.LOGGER.log(15, 'Motor(s) single stroke STARTED')
-                        self.state = 0
+                        # FIX: Keep state as HOMED (1) after single stroke completes
+                        self.state = 1  # Can run another stroke without re-homing
                         self.notify_view()
                         self.view.curve_button['state'] = 'normal'
                 else:
                     self.LOGGER.log(15, 'Motor(s) single stroke mock STARTED')
-                    self.state = 0
+                    # FIX: Keep state as HOMED (1) after single stroke in mock mode
+                    self.state = 1  # Can run another stroke without re-homing
                     self.notify_view()
                     ##time.sleep(5)
         # For cyclical strokes, stroke = 2. Run_2 is set true. If Motion is called again it needs the second argument tracker.
@@ -428,10 +454,12 @@ class Model:
                     if tracker == 1:
                         comm.Write('Program:Wave_Control.Run_2', 0)
                         self.LOGGER.log(15, 'Motor(s) STOPPED')
+                        # FIX: Keep state as HOMED (1) after stopping, not UNPREPARED (0)
+                        # Motors are still homed, just stopped - can restart without re-homing
                         if self.state == -1:
-                            self.state = 0
+                            self.state = 0  # Never prepared, need to prepare
                         else:
-                            self.state = 0
+                            self.state = 1  # Already homed, can restart directly
                             self.notify_view()
                     else:
                         self.state = 2
@@ -443,7 +471,12 @@ class Model:
             else:
                 if tracker == 1:
                     self.LOGGER.log(15, 'Motor(s) mock STOPPED')
-                    self.state = 0
+                    # FIX: Keep state as HOMED (1) after stopping in mock mode
+                    # Motors are still homed, just stopped - can restart without re-homing
+                    if self.state == -1:
+                        self.state = 0  # Never prepared, need to prepare
+                    else:
+                        self.state = 1  # Already homed, can restart directly
                     self.notify_view()
                 else:
                     # i = 0
@@ -499,7 +532,9 @@ class Model:
                     self.LOGGER.log(15, 'Successfully ran curve.')
         else:
             time.sleep(5)
-        self.state = 0
+        # FIX: Keep state as HOMED (1) after curve completes
+        # Motors are still homed, can run another curve without re-homing
+        self.state = 1
         self.notify_view()
         #self.curve_lock.release()
 
@@ -521,6 +556,34 @@ class Model:
         on init so it is not protected by a self.CONNECTED check."""
         self.live_motor_sets = []
         self.live_motors = {}
+
+    def full_application_reset(self):
+        """Comprehensive reset to bring application back to initial startup state.
+        Resets all state variables, clears motors, and resets UI state."""
+        # Turn off motors and clear errors first
+        self.motor_off()
+        
+        # Reset all dictionaries and lists to initial state
+        self.motdict = {}
+        self.live_motors = {}
+        self.live_motors_sets = []
+        self.attrcat = {}
+        self.csvattrcat = {}
+        self.csvlist = []
+        
+        # Reset state to unprepared state (0) so Prepare Motors button is enabled
+        self.state = 0
+        self.is_homing = False
+        
+        # Reset analytics settings
+        self.RECORD_ANALYTICS = False
+        self.ANALYTICS_INTERVAL = 0.25
+        self.ANALYTICS_DURATION = 10.0
+        
+        # Reset run enable flag
+        self.RUN_ENABLE = False
+        
+        self.LOGGER.info("Application fully reset to initial state")
 
     def mock_live_motor_reset(self):
         """Method to mock a live motor reset since the actual

@@ -24,7 +24,11 @@ class DefineMotors:
     def __init__(self, root: ttk.Notebook, model: Model):
         """Main Frame and driver for the Define Motors ab."""
         self.model = model
+        self.model.register_define_motors_view(self)
         self.root = root
+        
+        # Flag to prevent state changes during display refresh (not user edits)
+        self._refreshing_display = False
 
         self.tab = ttk.Frame(root)
 
@@ -90,6 +94,9 @@ class DefineMotors:
         
         self.sets_label = ttk.Label(self.movement_frame, text=self.setsStringVar.get())
         self.confirm_sets_button = ttk.Button(self.button_frame, text = 'Confirm Set', command=lambda: self.confirm_select(), state='disabled')
+        
+        # Stop button - mirrors ControlHome stop button functionality
+        self.stop_button = ttk.Button(self.button_frame, text='Stop Motor(s)', command=lambda: self.stop_motors(), state='disabled')
 
         self.param_button = ttk.Button(self.button_frame, text='(Parameter Details)',
                                        command=lambda: self.param_info_click())
@@ -108,6 +115,7 @@ class DefineMotors:
         #self.specify_type.grid(column=2, row=0, padx=(0, 30), pady=15)
         self.param_button.grid(column=4, row=0, padx=(0, 30))
         self.confirm_sets_button.grid(column=5,row=0,padx=(0,30))
+        self.stop_button.grid(column=6, row=0, padx=(0,30))
 
         # create Widgets for self.param_frame
         self.param_input_labels = [ttk.Label(self.param_frame, text=param)
@@ -262,7 +270,12 @@ class DefineMotors:
             if len(self.selected_motors) > 0:
                 for param in self.param_input_vars:
                     self.param_input_vars[param].set(
-                        str(self.selected_motors[0].write_params[param]))            
+                        str(self.selected_motors[0].write_params[param]))
+            
+            # Set state to unprepared (0) when motor sets are confirmed - requires re-homing
+            self.model.state = 0
+            self.model.notify_view()
+            
             self.param_frame_enable()
             self.setsStringVar.set(self.motorSet_to_string())
             self.sets_label.config(text = self.setsStringVar.get())
@@ -273,8 +286,26 @@ class DefineMotors:
 
     def motor_define(self):
         """Calls motor_define on model then updates UI upon response."""
+        # Save current UI parameter values before creating new motors
+        current_ui_params = {}
+        for param in self.param_input_vars:
+            val = self.param_input_vars[param].get()
+            if val.lstrip('-').isnumeric():
+                current_ui_params[param] = int(val)
+        
         self.model.motor_define()
         self.confirm_sets_button['state'] = 'enable'
+        
+        # Apply current UI params to newly created motors (so they inherit screen values, not defaults)
+        if current_ui_params:
+            for motor in self.model.live_motors.values():
+                for param, val in current_ui_params.items():
+                    motor.write_params[param] = val
+        
+        # Set state to unprepared (0) when motors are added - requires re-homing
+        self.model.state = 0
+        self.model.notify_view()
+        
         self.update_checkbutton_tips()
         #self.movement_frame_enable()
         self.color_buttons_green()
@@ -289,6 +320,10 @@ class DefineMotors:
 
     def update_motor_write_params(self, *args, param) -> Any:
         """When a param is edited, update the write_params of all relevant motors."""
+        # Skip if we're just refreshing display (not actual user edit)
+        if self._refreshing_display:
+            return
+            
         new_val: str = self.param_input_vars[param].get()
         if new_val.lstrip('-').isnumeric():
             int_val: int = int(new_val)
@@ -300,28 +335,69 @@ class DefineMotors:
             for motor_set in self.model.live_motors_sets:
                 for motor in motor_set.values():
                     motor.write_params[param] = int_val
+            # Also update all motors in live_motors (pending confirmation)
+            for motor in self.model.live_motors.values():
+                motor.write_params[param] = int_val
+            
+            # Set state to unprepared (0) when parameters change - requires re-homing
+            if len(self.model.live_motors_sets) > 0 or len(self.model.live_motors) > 0:
+                self.model.state = 0
+                self.model.notify_view()
+            
             self.update_checkbutton_tips()
 
     def motor_off(self):
-        """Calls motor_off on model then updates UI upon response."""
-        #TODO - CHANGE sets label according to this
-        self.model.motor_off()
+        """Performs a complete application reset - returns everything to initial startup state."""
+        # Call comprehensive reset on model to reset all state variables
+        self.model.full_application_reset()
+        
+        # Reset all motor checkboxes to unchecked state
         for i in range(len(self.checkButtons)):
-            if i in self.model.motdict:
-                # turn motor off in motdict if it was checked
-                self.model.motdict[i] = 0
             self.checkButtons[i].deselect()
-        if self.model.CONNECTED:
-            self.model.live_motor_reset()
-        else:
-            self.model.mock_live_motor_reset()
-        self.model.live_motors_sets.clear()
+            self.model.motdict[i] = 0
+        
+        # Clear selected motors list
+        self.selected_motors = []
+        
+        # Reset all parameter input fields to empty
+        for param in self.param_input_vars:
+            self.param_input_vars[param].set("")
+        
+        # Clear activated sets display
         self.setsStringVar.set("")
-        self.sets_label.config(text = self.setsStringVar.get())
+        self.sets_label.config(text=self.setsStringVar.get())
+        
+        # Disable confirm button and stop button
+        self.confirm_sets_button['state'] = 'disabled'
+        self.stop_button['state'] = 'disabled'
+        
+        # Reset visual indicators
         self.color_buttons_green()
         self.update_checkbutton_tips()
         self.param_frame_enable()
-        #self.movement_frame_enable()
+        
+        # Update Control Home view if it exists - ensure prepare button is enabled
+        if hasattr(self.model, 'view'):
+            self.model.view.update_msg('Visit the define motors frame to activate motors.')
+            self.model.view.update_button_status()  # This will enable prepare button since state = 0
+            self.model.view.color_motors_green()
+        
+        self.model.LOGGER.info("Complete UI reset - application returned to initial state")
+
+    def stop_motors(self):
+        """Stop motors - mirrors ControlHome stop_motors functionality."""
+        self.stop_button['state'] = 'disabled'
+        # Call model motion with tracker=1 to stop
+        # Use motion_type 2 (continuous) since that's what needs stopping
+        self.model.motion(2, 1)
+        self.model.LOGGER.info("Motors stopped from Define Motors tab")
+
+    def update_stop_button_status(self):
+        """Update stop button state based on model state. Called by model.notify_view()."""
+        if self.model.state == 2:  # Motors running
+            self.stop_button['state'] = 'normal'
+        else:
+            self.stop_button['state'] = 'disabled'
 
     # def movement_frame_enable(self):
     #     if len(self.model.live_motors) >= 1:
@@ -330,7 +406,10 @@ class DefineMotors:
     #         self.specify_type['state'] = 'disabled'
 
     def show_current_param_values(self):
-        ...
+        """Refresh parameter display without triggering state changes."""
+        # Set flag to prevent state changes during display refresh
+        self._refreshing_display = True
+        
         # FIX: Show parameters from confirmed sets, not just live_motors
         # This ensures parameter fields display correct values for all motors
         motors_to_show = []
@@ -347,6 +426,9 @@ class DefineMotors:
             for param in self.param_input_vars:
                 self.param_input_vars[param].set(
                     str(motors_to_show[0].write_params[param]))
+        
+        # Clear flag - allow state changes again
+        self._refreshing_display = False
 
     def param_frame_enable(self):
         # FIX: Enable parameter editing if there are motors in sets OR live_motors

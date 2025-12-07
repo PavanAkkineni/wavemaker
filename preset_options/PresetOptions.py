@@ -21,6 +21,10 @@ class PresetOptions:
         self.model = model
         self.processor = PresetProcessor(self.model)
         self.set_Var = tk.IntVar()
+        
+        # Track checkboxes and their variables for multi-select
+        self.set_checkboxes = []
+        self.set_checkbox_vars = []
 
         # set up and place title and content frames
         self.title_frame = ttk.Frame(self.tab, padding=25)
@@ -77,10 +81,21 @@ class PresetOptions:
     def onSelect(self):
         """This method is called when the notebook switched the view to this tab."""
         self.enable_apply_preset()
+        
+        # Clear existing checkboxes before creating new ones
+        for checkbox in self.set_checkboxes:
+            checkbox.destroy()
+        self.set_checkboxes = []
+        self.set_checkbox_vars = []
+        
+        # Create checkboxes for multi-select
         for index, motor_dict in enumerate(self.model.live_motors_sets):
-            self.radbutton = ttk.Radiobutton(self.set_frame, text = f"Set {index +1}: Motors {list(motor_dict.keys())}\n", 
-                            variable=self.set_Var, value=index, command=self.selectedSet())
-            self.radbutton.grid(column=0,row=index+1)
+            var = tk.IntVar(value=0)
+            self.set_checkbox_vars.append(var)
+            checkbox = ttk.Checkbutton(self.set_frame, text=f"Set {index + 1}: Motors {list(motor_dict.keys())}",
+                                        variable=var)
+            checkbox.grid(column=0, row=index + 1, sticky='w')
+            self.set_checkboxes.append(checkbox)
 
 
     def selectedSet(self):
@@ -100,11 +115,21 @@ class PresetOptions:
                 "Internal Error: Could not open the specified file name.")
 
     def apply_preset(self):
-        if (self.loadedPreset is not None) and (self.set_Var is not None):
-            selected_Set = self.model.live_motors_sets[self.set_Var.get()]
-            for mot_num, motor in selected_Set.items():
-                for key, value in self.loadedPreset.rows[mot_num].items():
-                    motor.write_params[key] = value
+        if self.loadedPreset is not None:
+            # Apply to all selected sets (multi-select)
+            applied = False
+            for index, var in enumerate(self.set_checkbox_vars):
+                if var.get() == 1:  # Checkbox is checked
+                    selected_set = self.model.live_motors_sets[index]
+                    for mot_num, motor in selected_set.items():
+                        for key, value in self.loadedPreset.rows[mot_num].items():
+                            motor.write_params[key] = value
+                    applied = True
+            
+            # Reset state to require re-homing after parameter changes
+            if applied:
+                self.model.state = 0
+                self.model.notify_view()
 
     def create_preset(self):
         filename = simpledialog.askstring(

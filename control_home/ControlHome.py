@@ -92,12 +92,14 @@ class ControlHome:
         self.stop_button.grid(row=12, column=5, columnspan=2,  sticky='nsew')
         ttk.Label(self.content_frame, text='  ').grid(column=0, row=13)
 
-        self.off_and_reset_button.grid(
-            row=14, column=5, columnspan=2, sticky="nesw")
+        # Hidden: Off and Reset button (functionality still available via Define Motors tab)
+        # self.off_and_reset_button.grid(
+        #     row=14, column=5, columnspan=2, sticky="nesw")
+        # ttk.Label(self.content_frame, text='  ').grid(column=0, row=15)
+        
+        self.analytics_info.grid(row=14, column=6)
+        self.analytics_checkbox.grid(row=14, column=5)
         ttk.Label(self.content_frame, text='  ').grid(column=0, row=15)
-        self.analytics_info.grid(row=16, column=6)
-        self.analytics_checkbox.grid(row=16, column=5)
-        ttk.Label(self.content_frame, text='  ').grid(column=0, row=17)
 
         # self.progress_bar=Canvas(self.content_frame,bg="white",width = 450,height = 20)    
         # self.progress_bar.place(relx=0.3, rely=1)
@@ -120,8 +122,10 @@ class ControlHome:
         if (self.model.RUN_ENABLE):
             self.msgvar.set("Ready to run")
             self.update_button_status()
-        if not (self.model.RUN_ENABLE):
-            self.disable_run()
+        else:
+            # Always update button status based on state, even if RUN_ENABLE is false
+            # This ensures correct button after reset or motor changes
+            self.update_button_status()
         self.color_motors_green()
 
     def update_msg(self, var:str):
@@ -129,6 +133,9 @@ class ControlHome:
 
     def update_button_status(self):
         self.disable_run()
+        # Keep all buttons disabled during homing
+        if self.model.is_homing:
+            return
         if (self.model.state == 0):
             self.prepare_button['state'] = 'normal'
         elif (self.model.state == 1):
@@ -278,10 +285,29 @@ class ControlHome:
     
 
     def off_and_reset(self):
-        self.model.motor_off()
-        self.disable_run()
+        """Performs a complete application reset - returns everything to initial startup state."""
+        # Call comprehensive reset on model
+        self.model.full_application_reset()
+        
+        # Reset all UI elements on Control Home tab
+        self.update_button_status()  # This will enable prepare button since state = 0 after reset
         self.color_motors_green()
         self.msgvar.set('Visit the define motors frame to activate motors.')
+        
+        # Reset analytics checkbox if it was checked
+        self.analytics_checkbox.deselect()
+        
+        # Clean up analytics UI elements if they exist
+        if hasattr(self, 'interval_label') and self.interval_label is not None:
+            try:
+                self.interval_label.destroy()
+                self.analytics_duration_entry.destroy()
+                self.analytics_interval_entry.destroy()
+                self.duration_label.destroy()
+            except:
+                pass
+        
+        self.model.LOGGER.info("Off and Reset completed - application at initial state")
 
     def update_progress_bar(self,percent):
         self.progress_bar.coords(self.canvas_shape,(0,0,int(450*percent),25))
